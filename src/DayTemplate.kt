@@ -13,7 +13,7 @@ fun main() {
 
     // test if implementation meets criteria from the description, like:
     try {
-        val testInput = y15.readInput("Day${day}_test")
+        val testInput = readInput("Day${day}_test")
         check(part1(testInput) == 1)
     } catch (e: FileNotFoundException) {
         // no tests
