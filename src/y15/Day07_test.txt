@@ -1,0 +1,7 @@
+NOT b -> d
+d OR c -> k
+44430 -> b
+d AND i -> a
+k RSHIFT 2 -> i
+e LSHIFT 15 -> c
+1 AND d -> e
