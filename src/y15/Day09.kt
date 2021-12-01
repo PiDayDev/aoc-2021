@@ -18,12 +18,6 @@ fun main() {
             acc + parse(curr)
         }
 
-    fun permutations(list: List<String>): List<List<String>> {
-        if (list.isEmpty()) return emptyList()
-        if (list.size == 1) return listOf(list)
-        return list.flatMap { elem -> permutations(list - elem).map { it + elem } }
-    }
-
     val input = readInput("Day${day}")
 
     val distances = parse(input)
