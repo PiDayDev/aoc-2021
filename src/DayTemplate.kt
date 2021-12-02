@@ -1,6 +1,6 @@
 import java.io.FileNotFoundException
 
-private const val day = "01"
+private const val day = "99"
 
 fun main() {
     fun part1(input: List<String>): Int {
