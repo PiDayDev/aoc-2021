@@ -1,4 +1,3 @@
-import java.io.FileNotFoundException
 import kotlin.math.absoluteValue
 
 private const val day = "07"
@@ -23,14 +22,6 @@ fun main() {
                 d * (d + 1) / 2
             }
         }
-    }
-
-    // test if implementation meets criteria from the description, like:
-    try {
-        val testInput = readInput("Day${day}_test")
-        check(part1(testInput) == 1)
-    } catch (e: FileNotFoundException) {
-        // no tests
     }
 
     val input = readInput("Day${day}")
