@@ -1,7 +1,5 @@
 package y16
 
-import java.io.FileNotFoundException
-
 private const val day = "99"
 
 fun main() {
@@ -17,7 +15,7 @@ fun main() {
     try {
         val testInput = readInput("Day${day}_test")
         check(part1(testInput) == 1)
-    } catch (e: FileNotFoundException) {
+    } catch (e: java.io.FileNotFoundException) {
         // no tests
     }
 
