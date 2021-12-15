@@ -8,8 +8,11 @@ fun main() {
         val rIdx = indices
         val cIdx = first().indices
         val dist = MutableList(size) { MutableList(first().size) { 1e7.toInt() - 1 } }
-        val unvisited = rIdx.flatMap { r -> cIdx.map { c -> r to c } }.toMutableList()
         dist[0][0] = 0
+
+        val unvisited = mutableListOf(0 to 0)
+        val visited = mutableSetOf(0 to 0)
+
         fun Pair<Int, Int>.dijkstra(dr: Int, dc: Int) {
             val (r0, c0) = this
             val r = r0 + dr
@@ -18,15 +21,18 @@ fun main() {
                 val old = dist[r][c]
                 val next = dist[r0][c0] + this@shortestPath[r][c]
                 dist[r][c] = min(old, next)
+                unvisited.add(r to c)
             }
         }
         while (unvisited.isNotEmpty()) {
             val next = unvisited.minByOrNull { (r, c) -> dist[r][c] }!!
             unvisited.remove(next)
+            visited.add(next)
             next.dijkstra(+1, 0)
             next.dijkstra(-1, 0)
             next.dijkstra(0, +1)
             next.dijkstra(0, -1)
+            unvisited.removeAll(visited)
         }
         return dist.last().last()
     }
@@ -36,7 +42,7 @@ fun main() {
 
     fun part1(input: List<String>) = input.toRisks().shortestPath()
 
-    fun List<List<Int>>.inc() = map { row -> row.map { if (it == 9) 1 else it + 1 } }
+    fun List<List<Int>>.inc() = map { row -> row.map { (it % 9) + 1 } }
 
     /* Very slow */
     fun part2(input: List<String>): Int {
