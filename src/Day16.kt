@@ -70,6 +70,21 @@ private data class Packet(val version: Int, val typeId: Int, val body: String) {
         return packets.flatMap { it.getVersions() } + version
     }
 
+    fun compute(): Long {
+        val packets = if (isOperator) subPacketsAndRest().first else emptyList()
+        val values = packets.map { it.compute() }
+        return when (typeId) {
+            0 -> values.sum()
+            1 -> values.fold(1) { a, b -> a * b }
+            2 -> values.minOf { it }
+            3 -> values.maxOf { it }
+            5 -> if (values[0] > values[1]) 1 else 0
+            6 -> if (values[0] < values[1]) 1 else 0
+            7 -> if (values[0] == values[1]) 1 else 0
+            else -> valueAndRest().first
+        }
+    }
+
 }
 
 private fun String.unpack() = this
@@ -86,19 +101,20 @@ private fun String.toPacket() =
 
 fun main() {
 
-
     fun part1(input: List<String>) = input.map {
         it.unpack().toPacket()!!.getVersions().sum()
     }
 
-    fun part2(input: List<String>): Int {
-        return input.size
+    fun part2(input: List<String>) = input.map {
+        it.unpack().toPacket()!!.compute()
     }
 
     try {
         val testInput = readInput("Day${day}_test")
-        val part1 = part1(testInput)
+        val part1 = part1(testInput.takeWhile { it.isNotBlank() })
         check(part1 == listOf(16, 12, 23, 31)) { "Part1 = $part1" }
+        val part2 = part2(testInput.takeLastWhile { it.isNotBlank() })
+        check(part2 == listOf(3, 54, 7, 9, 1, 0, 0, 1).map { it.toLong() }) { "Part2 = $part2" }
     } catch (e: java.io.FileNotFoundException) {
         // no tests
     }
