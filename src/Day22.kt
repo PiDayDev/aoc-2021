@@ -36,16 +36,100 @@ fun main() {
         return reactor.sumOf { floor -> floor.sumOf { line -> line.count { it } } }
     }
 
-    fun part2(input: List<String>): Int {
-        return input.size
+    fun List<IntRange>.stops() =
+        flatMap { listOf(it.first, it.last + 1) }.distinct().sorted()
+
+    fun follow(
+        step: Instr,
+        xStops: List<Int>,
+        yStops: List<Int>,
+        zStops: List<Int>,
+        on: MutableMap<Int, MutableMap<Int, MutableMap<Int, Boolean>>>
+    ) {
+        val xx = xStops.filter { it in step.xs }
+        val yy = yStops.filter { it in step.ys }
+        val zz = zStops.filter { it in step.zs }
+        if (step.on) {
+            xx.forEach { x ->
+                if (x !in on) {
+                    on[x] = HashMap(835)
+                }
+                val onx = on[x]!!
+                yy.forEach { y ->
+                    if (y !in onx) {
+                        onx[y] = HashMap(835)
+                    }
+                    val onxy = onx[y]!!
+                    zz.forEach { z ->
+                        onxy[z] = true
+                    }
+                }
+            }
+        } else {
+            xx.forEach { x ->
+                if (x in on) {
+                    val onx = on[x]!!
+                    yy.forEach { y ->
+                        if (y in onx) {
+                            zz.forEach { z ->
+                                onx[y]!!.remove(z)
+                            }
+                        }
+                    }
+                    on[x] = onx.filterValues { it.isNotEmpty() }.toMutableMap()
+                }
+            }
+            on.filterValues { it.isEmpty() }.forEach { (k, _) -> on.remove(k) }
+        }
     }
 
-    // test if implementation meets criteria from the description, like:
-    try {
-        val testInput = readInput("Day${day}_test")
-        check(part1(testInput) == 1)
-    } catch (e: java.io.FileNotFoundException) {
-        // no tests
+    fun howManyOn(
+        on: Map<Int, Map<Int, Map<Int, Boolean>>>,
+        xStops: List<Int>,
+        yStops: List<Int>,
+        zStops: List<Int>
+    ): Long {
+        var total = 0L
+        on.forEach { (x, xMap) ->
+            val xSize = xStops[xStops.indexOf(x) + 1] - x
+            xMap.forEach { (y, yMap) ->
+                val ySize = yStops[yStops.indexOf(y) + 1] - y
+                yMap.forEach { (z, on: Boolean) ->
+                    val zSize = zStops[zStops.indexOf(z) + 1] - z
+                    if (on) {
+                        check(xSize > 0)
+                        check(ySize > 0)
+                        check(zSize > 0)
+                        total += xSize.toLong() * ySize.toLong() * zSize.toLong()
+                    }
+                }
+            }
+        }
+        return total
+    }
+
+    fun part2(input: List<String>): Long {
+        val instructions = input.map { it.parse() }
+        val xStops = instructions.map { it.xs }.stops()
+        val yStops = instructions.map { it.ys }.stops()
+        val zStops = instructions.map { it.zs }.stops()
+        println(
+            """
+            ${xStops.size}: ${xStops.minOrNull()} .. ${xStops.maxOrNull()}
+            ${yStops.size}: ${yStops.minOrNull()} .. ${yStops.maxOrNull()}
+            ${zStops.size}: ${zStops.minOrNull()} .. ${zStops.maxOrNull()}
+        """.trimIndent()
+        )
+
+        var total = 0L
+        xStops.chunked(3).forEachIndexed { index, someX ->
+            val on: MutableMap<Int, MutableMap<Int, MutableMap<Int, Boolean>>> = mutableMapOf()
+            instructions.forEachIndexed { i, step ->
+                follow(step, someX, yStops, zStops, on)
+            }
+            total += howManyOn(on, xStops, yStops, zStops)
+        }
+        return total
     }
 
     val input = readInput("Day${day}")
