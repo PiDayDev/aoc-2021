@@ -23,7 +23,12 @@ private val arcs: List<Pair<Int, Int>> = (0..9).map { it to it + 1 } +
 
 private val forbiddenSpots = setOf(2, 4, 6, 8)
 
-private fun List<Pair<Int, Int>>.path(a: Int, b: Int): List<Int> {
+private val memoizedPaths = mutableMapOf<Pair<Int, Int>, List<Int>>()
+
+private fun List<Pair<Int, Int>>.fastPath(a: Int, b: Int) =
+    memoizedPaths.getOrPut(a to b) { path(a, b) }
+
+internal fun List<Pair<Int, Int>>.path(a: Int, b: Int): List<Int> {
     if (a == b) return listOf(a)
     var paths: List<List<Int>> = listOf(listOf(a))
     var ok: List<Int>? = null
@@ -42,9 +47,9 @@ private fun List<Pair<Int, Int>>.reachableNodes(from: Int) =
     filter { it.first == from }.map { it.second } +
             filter { it.second == from }.map { it.first }
 
-private data class Cost(val valid: Boolean = true, val energy: Long = Long.MAX_VALUE)
+internal data class Day23Cost(val valid: Boolean = true, val energy: Int = Int.MAX_VALUE)
 
-private data class Diagram(
+private data class Diagram1(
     val a1: Int, val a2: Int,
     val b1: Int, val b2: Int,
     val c1: Int, val c2: Int,
@@ -59,7 +64,7 @@ private data class Diagram(
             setOf(c1, c2) == setOf(15, 16) &&
             setOf(d1, d2) == setOf(17, 18)
 
-    fun evolutions(): Map<Diagram, Cost> =
+    fun evolutions(): Map<Diagram1, Day23Cost> =
         ((0..18) - forbiddenSpots - positions.toSet())
             .flatMap {
                 listOf(
@@ -69,13 +74,28 @@ private data class Diagram(
                     copy(d1 = it), copy(d2 = it),
                 )
             }
+            .filter { !it.isDeadlock() }
             .map { it to moveTo(it) }
             .filter { it.second.valid }
             .shuffled()
             .toMap()
 
-    fun moveTo(end: Diagram): Cost {
-        val fail = Cost(valid = false)
+    private fun isDeadlock(): Boolean {
+        val amberA = setOf(a1, a2)
+        val bronze = setOf(b1, b2)
+        val copper = setOf(c1, c2)
+        val desert = setOf(d1, d2)
+        val c3 = 3 in copper
+        val d3 = 3 in desert
+        val a5 = 5 in amberA
+        val d5 = 5 in desert
+        val a7 = 7 in amberA
+        val b7 = 7 in bronze
+        return c3 && a5 || d3 && a5 || d5 && a7 || d5 && b7 || d3 && a7
+    }
+
+    fun moveTo(end: Diagram1): Day23Cost {
+        val fail = Day23Cost(valid = false)
         val after = end.positions
         val differences = positions.indices.filter {
             positions[it] != after[it]
@@ -85,7 +105,7 @@ private data class Diagram(
         val index = differences.first()
         val src = positions[index]
         val dst = after[index]
-        val path = arcs.path(src, dst)
+        val path = arcs.fastPath(src, dst)
 
         // does it cross any other amphipod ?
         val rest = positions.filterIndexed { j, _ -> index != j }
@@ -119,7 +139,7 @@ private data class Diagram(
         // does it move to forbidden spot?
         if (positions.any { it in forbiddenSpots }) return fail
 
-        return Cost(energy = multiplier(index).toLong() * (path.size - 1))
+        return Day23Cost(energy = multiplier(index) * (path.size - 1))
     }
 
     fun multiplier(index: Int) = when (index) {
@@ -131,7 +151,7 @@ private data class Diagram(
     }
 
     fun heuristicPathCost(src: Int, dst: Int) =
-        (arcs.path(src, dst).size - 1) * multiplier(positions.indexOf(src))
+        (arcs.fastPath(src, dst).size - 1) * multiplier(positions.indexOf(src))
 
     fun lowerBound(): Long {
         val a = min(
@@ -167,22 +187,25 @@ private data class Diagram(
     }
 }
 
-private class Solver {
-    fun aStar(start: Diagram): Long {
+private class Solver1 {
+    fun aStar(start: Diagram1): Long {
         val lots = 999_999_999L
-        val queue = PriorityQueue<Pair<Diagram, Long>> { a, b ->
+        val queue = PriorityQueue<Pair<Diagram1, Long>> { a, b ->
             (a.second - b.second).sign
         }
         queue.add(start to 0L)
-        val distances = mutableMapOf<Diagram, Long>()
-        val fScore = mutableMapOf<Diagram, Long>()
-        val parents = mutableMapOf<Diagram, Diagram>()
+        val distances = mutableMapOf<Diagram1, Long>()
+        val fScore = mutableMapOf<Diagram1, Long>()
+        val parents = mutableMapOf<Diagram1, Diagram1>()
         distances[start] = 0L
         fScore[start] = start.lowerBound()
+        var j = 0
         while (queue.isNotEmpty()) {
             val (v, result) = queue.poll()
             if (v.isFinal()) {
                 return result
+            } else if (j++ % 1000 == 0) {
+                println("[$j] ${distances.size} distances | $result\n$v")
             }
             val neighbors = v.evolutions()
             for ((u, cost) in neighbors) {
@@ -205,7 +228,7 @@ private class Solver {
 
 
 fun main() {
-    fun List<String>.toDiagram(): Diagram {
+    fun List<String>.toDiagram(): Diagram1 {
         val them = this[2].split("#").filter { it.isNotBlank() } +
                 this[3].split("#").filter { it.isNotBlank() }
 
@@ -218,7 +241,7 @@ fun main() {
         val c2 = them.lastIndexOf("C")
         val d1 = them.indexOf("D")
         val d2 = them.lastIndexOf("D")
-        return Diagram(
+        return Diagram1(
             a1 = positions[a1],
             a2 = positions[a2],
             b1 = positions[b1],
@@ -233,16 +256,7 @@ fun main() {
     fun part1(input: List<String>): Long {
         val diagram = input.toDiagram()
         println(diagram)
-        return Solver().aStar(diagram)
-    }
-
-    // test if implementation meets criteria from the description, like:
-    try {
-        val testInput = readInput("Day${day}_test")
-        val test1 = part1(testInput)
-        check(test1 == 12521L) { "Test 1 solved in $test1" }
-    } catch (e: java.io.FileNotFoundException) {
-        // no tests
+        return Solver1().aStar(diagram)
     }
 
     val input = readInput("Day${day}")

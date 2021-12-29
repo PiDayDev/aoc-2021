@@ -1,0 +1,320 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * {
+            font-size: 90px;
+        }
+
+        i {
+            cursor: pointer;
+            font-size: medium;
+            border-radius: 10px;
+            border: 1px dashed #444;
+            padding: 10px;
+        }
+
+        table, div {
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        td {
+            width: 120px;
+            height: 120px;
+            text-align: center;
+        }
+
+        button {
+            font-weight: bold;
+            width: 100%;
+            height: 100%;
+            opacity: 0.7;
+            color: white;
+            border-radius: 30px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            cursor: pointer;
+        }
+
+        button:active {
+            opacity: 1;
+        }
+    </style>
+    <script>
+        const colors = {
+            A: 'blue',
+            B: 'green',
+            C: 'red',
+            D: 'purple',
+            '.': '#444',
+            'x': '#bbb'
+        }
+        const costs = {
+            A: 1,
+            B: 10,
+            C: 100,
+            D: 1000,
+        }
+        const INITIAL = '..x.x.x.x..CDACBBDA__DBBAADCC';
+        let STATUS = [...INITIAL]
+        let selected = null
+        let cost = 0
+        let stack = []
+
+        const render = () => {
+            STATUS.forEach((v, i) => {
+                const id = `${i}`;
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.innerText = v;
+                    let style = `background:${colors[v]};`;
+                    style += `border: 12px solid ${selected?.idx === id ? 'goldenrod' : 'transparent'};`
+                    btn.style = style;
+                }
+            })
+            document.getElementById('result').innerText = cost
+        }
+
+        function distance(a0, b0) {
+            const a = parseInt(`${a0}`)
+            const b = parseInt(`${b0}`)
+            if (a <= 10 && b <= 10) return Math.abs(b - a);
+
+            function reduce(n) {
+                let cost = 4
+                if ([11, 13, 15, 17].includes(n)) cost = 1
+                else if ([12, 14, 16, 18].includes(n)) cost = 2
+                else if ([21, 23, 25, 27].includes(n)) cost = 3
+                let dest = 8
+                if ([11, 12, 21, 22].includes(n)) dest = 2
+                else if ([13, 14, 23, 24].includes(n)) dest = 4
+                else if ([15, 16, 25, 26].includes(n)) dest = 6
+                return {cost, dest}
+            }
+
+            let tot = 0
+            let a1 = a
+            let b1 = b
+            if (a > 10) {
+                const {cost, dest} = reduce(a);
+                tot += cost
+                a1 = dest
+            }
+            if (b > 10) {
+                const {cost, dest} = reduce(b);
+                tot += cost
+                b1 = dest
+            }
+            console.log(`= Tot ${tot} + distance(${a1},${b1})`)
+            return tot + distance(a1, b1)
+        }
+
+        const detectDeadlock = () => {
+            const d5 = STATUS[5] === "D"
+            const d3 = STATUS[3] === "D"
+            const a7 = STATUS[7] === "A"
+            const a5 = STATUS[5] === "A"
+            const c3 = STATUS[3] === "C"
+            const b7 = STATUS[7] === "B"
+            const deadlock = c3 && a5 || d3 && a5 ||
+                d5 && a7 || d5 && b7 || d3 && a7;
+            document.body.style = `background: ${deadlock ? 'darkred' : ''}`
+            return deadlock
+        };
+
+        const autoMove = () => {
+            function check(array, dest, success, fail) {
+                if (!array.map(j => STATUS[j]).join("").match(fail)) {
+                    for (let delta of [-1, +1])
+                        for (let k = dest + delta; 0 <= k && k <= 10; k += delta) {
+                            if (STATUS[k] === success) return k;
+                            if (STATUS[k].match(fail)) break;
+                        }
+                    for (let k of [11, 13, 15, 17]) {
+                        if (!array.includes(k) && STATUS[k] === success) {
+                            const min = Math.min(k - 9, dest)
+                            const max = Math.max(k - 9, dest)
+                            if (!STATUS.filter((v, j) => min <= j && j <= max).join("").match(fail))
+                                return k;
+                        }
+                    }
+                }
+                return undefined
+            }
+
+            return check([11, 12, 21, 22], 2, 'A', /[BCD]/) ??
+                check([13, 14, 23, 24], 4, 'B', /[ACD]/) ??
+                check([15, 16, 25, 26], 6, 'C', /[ABD]/) ??
+                check([17, 18, 27, 28], 8, 'D', /[ABC]/);
+        }
+
+        const onClick = (button) => {
+            const idx = button.id;
+            const value = button.innerText
+            if (value === "." && selected) {
+                stack.push({STATUS: [...STATUS], selected: {...selected}, cost})
+                STATUS[idx] = selected.value
+                STATUS[selected.idx] = value
+                cost += costs[selected.value] * distance(idx, selected.idx)
+                selected = null
+                const auto = autoMove()
+                if (autoMove() !== undefined)
+                    onClick(document.getElementById(`${auto}`))
+            } else if ('ABCD'.includes(value)) {
+                selected = {idx, value}
+            }
+            detectDeadlock()
+
+            render()
+        }
+
+        const reset = () => {
+            STATUS = [...INITIAL]
+            selected = null
+            cost = 0
+            stack = []
+        }
+
+        const undo = () => {
+            const prev = stack.pop()
+            if (prev) {
+                STATUS = prev.STATUS
+                selected = prev.selected
+                cost = prev.cost
+                render()
+            }
+        }
+
+        const init = () => {
+            render()
+            const buttons = [...document.getElementsByTagName('button')];
+            buttons.forEach(b => b.onclick = (e) => onClick(e.target))
+        };
+    </script>
+    <title>A.o.C. 2021 - day 23</title>
+</head>
+<body onload="init()">
+<table>
+    <tr>
+        <td>
+            <button id="0"></button>
+        </td>
+        <td>
+            <button id="1"></button>
+        </td>
+        <td>
+            <button id="2"></button>
+        </td>
+        <td>
+            <button id="3"></button>
+        </td>
+        <td>
+            <button id="4"></button>
+        </td>
+        <td>
+            <button id="5"></button>
+        </td>
+        <td>
+            <button id="6"></button>
+        </td>
+        <td>
+            <button id="7"></button>
+        </td>
+        <td>
+            <button id="8"></button>
+        </td>
+        <td>
+            <button id="9"></button>
+        </td>
+        <td>
+            <button id="10"></button>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">&nbsp;</td>
+        <td>
+            <button id="11"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="13"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="15"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="17"></button>
+        </td>
+        <td colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+        <td colspan="2">&nbsp;</td>
+        <td>
+            <button id="12"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="14"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="16"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="18"></button>
+        </td>
+        <td colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+        <td colspan="2">&nbsp;</td>
+        <td>
+            <button id="21"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="23"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="25"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="27"></button>
+        </td>
+        <td colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+        <td colspan="2">&nbsp;</td>
+        <td>
+            <button id="22"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="24"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="26"></button>
+        </td>
+        <td>&nbsp;</td>
+        <td>
+            <button id="28"></button>
+        </td>
+        <td colspan="2">&nbsp;</td>
+    </tr>
+</table>
+<div>
+    <i onclick="reset()">RESET ❌</i>
+    COST = <span id="result">0</span>
+    <i onclick="undo()">UNDO ↩</i>
+</div>
+</body>
+</html>
