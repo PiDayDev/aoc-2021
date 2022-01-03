@@ -19,6 +19,11 @@ fun String.md5(): String {
 
 fun String.md5b() = MessageDigest.getInstance("MD5").digest(toByteArray())
 
+fun String.md5h(): String {
+    val bytes = md5b()
+    return bytes.joinToString("") { it.toUByte().toString(16).padStart(2, '0') }
+}
+
 fun <T> permutations(list: List<T>): List<List<T>> {
     if (list.isEmpty()) return emptyList()
     if (list.size == 1) return listOf(list)

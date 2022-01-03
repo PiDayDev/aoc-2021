@@ -3,11 +3,6 @@ package y16
 private const val input = "qzyelonm"
 
 fun main() {
-    fun md5(s: String): String {
-        val bytes = s.md5b()
-        return bytes.joinToString("") { it.toUByte().toString(16).padStart(2, '0') }
-    }
-
     fun solve(hash: (String) -> String): Int {
         val v = generateSequence(0) { it + 1 }
             .map { it to input + it }
@@ -36,6 +31,6 @@ fun main() {
         return v
     }
 
-    println(solve { md5(it) })
-    println(solve { (0..2016).fold(it) { acc, _ -> md5(acc) } })
+    println(solve { it.md5h() })
+    println(solve { (0..2016).fold(it) { acc, _ -> acc.md5h() } })
 }
