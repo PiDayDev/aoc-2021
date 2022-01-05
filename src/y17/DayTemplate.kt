@@ -1,6 +1,6 @@
-package y16
+package y17
 
-private const val day = "99"
+private const val day = "00"
 
 fun main() {
     fun part1(input: List<String>): Int {
@@ -11,7 +11,6 @@ fun main() {
         return input.size
     }
 
-    // test if implementation meets criteria from the description, like:
     try {
         val testInput = readInput("Day${day}_test")
         check(part1(testInput) == 1)
