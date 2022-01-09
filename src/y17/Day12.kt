@@ -2,21 +2,21 @@ package y17
 
 private const val day = 12
 
-private class DisjointSet(initialSet: List<Int> = emptyList()) {
-    val elements: MutableMap<Int, Int> = initialSet.associateWith { it }.toMutableMap()
+class DisjointSet<I>(initialSet: List<I> = emptyList()) {
+    val elements: MutableMap<I, I> = initialSet.associateWith { it }.toMutableMap()
 
-    fun add(elem: Int) {
+    fun add(elem: I) {
         if (elem !in elements.keys)
             elements[elem] = elem
     }
 
-    fun findPartition(elem: Int): Int =
+    fun findPartition(elem: I): I =
         when (val info = elements[elem]!!) {
             elem -> elem
             else -> findPartition(info)
         }
 
-    fun merge(elem1: Int, elem2: Int): Boolean {
+    fun merge(elem1: I, elem2: I): Boolean {
         val r1 = findPartition(elem1)
         val r2 = findPartition(elem2)
         if (r1 == r2) {
@@ -27,13 +27,13 @@ private class DisjointSet(initialSet: List<Int> = emptyList()) {
         return true
     }
 
-    fun areDisjoint(elem1: Int, elem2: Int) = findPartition(elem1) != findPartition(elem2)
+    fun areDisjoint(elem1: I, elem2: I) = findPartition(elem1) != findPartition(elem2)
 }
 
 
 fun main() {
-    fun List<String>.toDisjointSets(): DisjointSet {
-        val ds = DisjointSet()
+    fun List<String>.toDisjointSets(): DisjointSet<Int> {
+        val ds = DisjointSet<Int>()
         forEach { row ->
             val (k, v) = row.split(" <-> ")
             val key = k.toInt()

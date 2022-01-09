@@ -21,14 +21,18 @@ private fun List<Int>.repeat(n: Int): List<Int> = when {
 fun List<Int>.knotHash(): List<Int> {
     var current = 0
     var skip = 0
-    val sparse = fold((0..255).toList()) { list, len ->
+    return fold((0..255).toList()) { list, len ->
         val result = list.flip(current, len)
         current = (current + len + skip) % list.size
         skip++
         result
     }
-    return sparse
 }
+
+fun List<Int>.knotHashHex() = knotHash()
+    .chunked(16)
+    .map { it.reduce { a, b -> a xor b } }
+    .joinToString("") { it.toString(16).padStart(2, '0') }
 
 fun main() {
 
@@ -37,16 +41,12 @@ fun main() {
         .split(",")
         .map { it.toInt() }
         .knotHash()
-        .let{it[0]*it[1]}
-
+        .let { it[0] * it[1] }
 
     fun part2(input: List<String>) =
         (input.first().map { it.code } + listOf(17, 31, 73, 47, 23))
             .repeat(64)
-            .knotHash()
-            .chunked(16)
-            .map { it.reduce { a, b -> a xor b } }
-            .joinToString("") { it.toString(16).padStart(2, '0') }
+            .knotHashHex()
 
     val input = readInput("Day${day}")
     println(part1(input))
