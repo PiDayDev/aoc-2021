@@ -5,7 +5,7 @@ private const val day = 19
 private data class Line(val i: String, val a: Int, val b: Int, val c: Int)
 
 @Suppress("UNUSED_PARAMETER")
-private data class Registers19(val registers: MutableList<Int> = mutableListOf(0, 0, 0, 0, 0, 0)) {
+private data class Registers19(val registers: MutableList<Int>) {
     fun set(register: Int, value: Int): Registers19 = registers
         .toMutableList()
         .also { it[register] = value }
@@ -40,34 +40,57 @@ private data class Registers19(val registers: MutableList<Int> = mutableListOf(0
 }
 
 fun main() {
-    fun part1(input: List<String>): Int {
+    fun executeProgram(input: List<String>, init: Registers19): Int {
+        var state = init
         val pointer = input.first().substringAfter("#ip ").toInt()
         val program = input.drop(1)
             .map { it.split(" ") }
             .map { (i, a, b, c) -> Line(i, a.toInt(), b.toInt(), c.toInt()) }
 
-        var state = Registers19()
+        var j = 0L
         while (true) {
             val idx = state.registers[pointer]
             if (idx !in program.indices) break
-            state = state.exec(program[idx])
-            state.registers[pointer]=1+state.registers[pointer]
+            val instruction = program[idx]
+            state = state.exec(instruction)
+            state.registers[pointer] = 1 + state.registers[pointer]
+
+            if (++j % 12345678L == 476L)
+                println("$j / $state")
         }
         return state.registers.first()
     }
 
-    fun part2(input: List<String>): Int {
-        return input.size
-    }
+    fun part1(input: List<String>): Int =
+        executeProgram(input, Registers19(mutableListOf(0, 0, 0, 0, 0, 0)))
 
-    try {
-        val testInput = readInput("Day${day}_test")
-        check(part1(testInput) == 1)
-    } catch (e: java.io.FileNotFoundException) {
-        // no tests
+    @Suppress("UNUSED_VARIABLE")
+    fun part2(): Long {
+        // See Day19.js for a JS version of the instructions, where registries are named a,b,c,d,e,goto.
+
+        // After the initial steps, the program enters a loop that can be summarized as
+        //language=JavaScript
+        val actualProgram = """
+            do {
+                b=1;
+                do {
+                    e = d*b;
+                    if (e===c) a+=d;
+                    b++;
+                } while (b<=c);
+                d++
+            } while(d<=c);
+        """.trimIndent()
+
+        // This just adds to a (goal registry) all the divisors of value in registry c, which has value 10551277
+
+        // so...
+        val c = 10551277L
+        return (1L..c).asSequence().filter { c % it == 0L }.sumOf { it }
     }
 
     val input = readInput("Day${day}")
     println(part1(input))
-    println(part2(input))
+    println(part2())
 }
+
