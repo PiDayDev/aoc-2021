@@ -34,22 +34,26 @@ fun main() {
         return bots.count { strongest reaches it }
     }
 
-    fun part2(input: List<String>): Long = 0L
+    /**
+     *  Over-simplified version with 3-D coordinates flattened to just the distance.
+     *  Luckily... it worked.
+     */
+    fun part2(input: List<String>): Long {
+        val bots = input.map { it.toBot() }
+        val flat = bots
+            .map { it.star().map { s -> s.dist }.sorted() }
+            .map { it.first()..it.last() }
+        val pointsWithDistances = flat
+            .flatMap { listOf(it.first, it.last) }
+            .distinct()
+            .associateWith { here -> flat.count { here in it } }
+        val maxBotCount = pointsWithDistances.values.maxOf { it }
+        val bestBot = pointsWithDistances.filterValues { it == maxBotCount }.toList()
+
+        return bestBot.first().first
+    }
 
     val input = readInput("Day${day}")
     println(part1(input))
-
-//    val t2 = part2(readInput("Day${day}_test"))
-//    println(t2)
-//    check(false)
-    val a2 = part2(input)
-    println(a2)
-    check(a2 in 120000001 until 135016334)
-    check(a2 !in listOf(
-        133_022_408L,
-        131_724_408L,
-        131_724_012L,
-        130_370_670L,
-    ))
-//130370670
+    println(part2(input))
 }
