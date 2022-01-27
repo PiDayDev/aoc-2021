@@ -8,8 +8,11 @@ class IntCodeProcessor(
         .mapIndexed { i, v -> i.toLong() to v }
         .toMap().toMutableMap()
 
-    private var k = 0L
+    private var pointer = 0L
+
     private var halted = false
+
+    private var relativeBase = 0L
 
     fun halted() = halted
 
@@ -18,56 +21,64 @@ class IntCodeProcessor(
         output: (Long) -> Unit
     ) {
         while (!halted) {
-            val opCode = codes.at(k)
-            val a = codes.at(k + 1)
-            val b = codes.at(k + 2)
-            val c = codes.at(k + 3)
+            val opCode = codes.at(pointer)
+            val a = codes.at(pointer + 1)
+            val b = codes.at(pointer + 2)
+            val c = codes.at(pointer + 3)
 
             val types = (opCode / 100).toString()
-            val immA = types.isImmediate(0)
-            val immB = types.isImmediate(1)
+            val modeA = types.getMode(0)
+            val modeB = types.getMode(1)
+            val modeC = types.getMode(2)
+
+            val destA = addr(a, modeA)
+            val destC = addr(c, modeC)
 
             when ((opCode % 100).toInt()) {
                 1 -> {
-                    codes[c] = codes.valueOf(a, immA) + codes.valueOf(b, immB)
-                    k += 4
+                    codes[destC] = codes.valueOf(a, modeA) + codes.valueOf(b, modeB)
+                    pointer += 4
                 }
                 2 -> {
-                    codes[c] = codes.valueOf(a, immA) * codes.valueOf(b, immB)
-                    k += 4
+                    codes[destC] = codes.valueOf(a, modeA) * codes.valueOf(b, modeB)
+                    pointer += 4
                 }
                 3 -> {
-                    codes[a] = input.next()
-                    k += 2
+                    codes[destA] = input.next()
+                    pointer += 2
                 }
                 4 -> {
-                    output(codes.valueOf(a, immA))
-                    k += 2
+                    output(codes.valueOf(a, modeA))
+                    pointer += 2
                     if (stopAfterOutput) {
                         break
                     }
                 }
                 5 -> {
-                    if (0L != codes.valueOf(a, immA)) {
-                        k = codes.valueOf(b, immB)
+                    if (0L != codes.valueOf(a, modeA)) {
+                        pointer = codes.valueOf(b, modeB)
                     } else {
-                        k += 3
+                        pointer += 3
                     }
                 }
                 6 -> {
-                    if (0L == codes.valueOf(a, immA)) {
-                        k = codes.valueOf(b, immB)
+                    if (0L == codes.valueOf(a, modeA)) {
+                        pointer = codes.valueOf(b, modeB)
                     } else {
-                        k += 3
+                        pointer += 3
                     }
                 }
                 7 -> {
-                    codes[c] = bool(codes.valueOf(a, immA) < codes.valueOf(b, immB))
-                    k += 4
+                    codes[destC] = bool(codes.valueOf(a, modeA) < codes.valueOf(b, modeB))
+                    pointer += 4
                 }
                 8 -> {
-                    codes[c] = bool(codes.valueOf(a, immA) == codes.valueOf(b, immB))
-                    k += 4
+                    codes[destC] = bool(codes.valueOf(a, modeA) == codes.valueOf(b, modeB))
+                    pointer += 4
+                }
+                9 -> {
+                    relativeBase += codes.valueOf(a, modeA)
+                    pointer += 2
                 }
                 99 -> {
                     halted = true
@@ -77,11 +88,29 @@ class IntCodeProcessor(
         }
     }
 
-    private fun Map<Long,Long>.at(idx: Long) = get(idx) ?: 0
+    private fun addr(idx: Long, mode: Mode) = when(mode) {
+        Mode.RELATIVE -> idx+relativeBase
+        else -> idx
+    }
 
-    private fun Map<Long,Long>.valueOf(idx: Long, immediate: Boolean) = if (immediate) idx else this[idx]!!
+    private fun Map<Long, Long>.at(idx: Long) = get(idx) ?: 0
 
-    private fun String.isImmediate(pos: Int) = getOrNull(length - 1 - pos) == '1'
+    private fun Map<Long, Long>.valueOf(idx: Long, mode: Mode) = when(mode) {
+        Mode.IMMEDIATE -> idx
+        Mode.RELATIVE -> this[relativeBase+idx] ?: 0L
+        Mode.POSITION -> this[idx] ?: 0L
+    }
+
+    private fun String.getMode(pos: Int) =
+        when (getOrNull(length - 1 - pos)) {
+        '1' -> Mode.IMMEDIATE
+        '2' -> Mode.RELATIVE
+        else -> Mode.POSITION
+    }
 
     private fun bool(b: Boolean) = if (b) 1L else 0L
+}
+
+private enum class Mode {
+    POSITION, IMMEDIATE, RELATIVE
 }
