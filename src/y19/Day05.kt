@@ -2,23 +2,13 @@ package y19
 
 private const val day = "05"
 
-fun main() {
-    fun String.isImmediate(pos: Int) =
-        getOrNull(length - 1 - pos) == '1'
-
-    fun List<Int>.valueOf(idx: Int, immediate: Boolean) =
-        if (immediate) idx else this[idx]
-
-    fun List<Int>.at(idx: Int) = getOrNull(idx) ?: 0
-
-    fun bool(b: Boolean) = if (b) 1 else 0
-
+class IntCodeProcessor5 {
     fun process(
-        start: List<Int>,
-        output: (Int) -> Unit,
-        input: () -> Int
+        startCodes: List<Int>,
+        input: Iterator<Int>,
+        output: (Int) -> Unit
     ): Int {
-        val codes = start.toMutableList()
+        val codes = startCodes.toMutableList()
         var k = 0
         while (k in codes.indices) {
             val opCode = codes.at(k)
@@ -40,7 +30,7 @@ fun main() {
                     k += 4
                 }
                 3 -> {
-                    codes[a] = input()
+                    codes[a] = input.next()
                     k += 2
                 }
                 4 -> {
@@ -77,11 +67,23 @@ fun main() {
         return codes[0]
     }
 
+    private fun String.isImmediate(pos: Int) =
+        getOrNull(length - 1 - pos) == '1'
+
+    private fun List<Int>.valueOf(idx: Int, immediate: Boolean) =
+        if (immediate) idx else this[idx]
+
+    fun List<Int>.at(idx: Int) = getOrNull(idx) ?: 0
+
+    private fun bool(b: Boolean) = if (b) 1 else 0
+}
+
+fun main() {
 
     fun List<String>.execute(systemId: Int): Int {
         val codes = joinToString("").split(",").map { it.toInt() }
         val outputs = mutableListOf<Int>()
-        process(codes, outputs::add) { systemId }
+        IntCodeProcessor5().process(codes, sequenceOf(systemId).iterator(), outputs::add)
         println(outputs)
         return outputs.last()
     }
