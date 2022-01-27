@@ -2,15 +2,21 @@ package y19
 
 private const val day = "05"
 
-class IntCodeProcessor5 {
+class IntCodeProcessor5(
+    initialCodes: List<Int>,
+    private val stopAfterOutput: Boolean = false
+) {
+    private var codes = initialCodes.toMutableList()
+    private var k = 0
+    private var halted = false
+
+    fun halted() = halted
+
     fun process(
-        startCodes: List<Int>,
         input: Iterator<Int>,
         output: (Int) -> Unit
-    ): Int {
-        val codes = startCodes.toMutableList()
-        var k = 0
-        while (k in codes.indices) {
+    ) {
+        while (!halted) {
             val opCode = codes.at(k)
             val a = codes.at(k + 1)
             val b = codes.at(k + 2)
@@ -36,6 +42,9 @@ class IntCodeProcessor5 {
                 4 -> {
                     output(codes.valueOf(a, immA))
                     k += 2
+                    if (stopAfterOutput) {
+                        break
+                    }
                 }
                 5 -> {
                     if (0 != codes.valueOf(a, immA)) {
@@ -60,20 +69,18 @@ class IntCodeProcessor5 {
                     k += 4
                 }
                 99 -> {
+                    halted = true
                     break
                 }
             }
         }
-        return codes[0]
     }
 
-    private fun String.isImmediate(pos: Int) =
-        getOrNull(length - 1 - pos) == '1'
+    private fun List<Int>.at(idx: Int) = getOrNull(idx) ?: 0
 
-    private fun List<Int>.valueOf(idx: Int, immediate: Boolean) =
-        if (immediate) idx else this[idx]
+    private fun List<Int>.valueOf(idx: Int, immediate: Boolean) = if (immediate) idx else this[idx]
 
-    fun List<Int>.at(idx: Int) = getOrNull(idx) ?: 0
+    private fun String.isImmediate(pos: Int) = getOrNull(length - 1 - pos) == '1'
 
     private fun bool(b: Boolean) = if (b) 1 else 0
 }
@@ -83,7 +90,7 @@ fun main() {
     fun List<String>.execute(systemId: Int): Int {
         val codes = joinToString("").split(",").map { it.toInt() }
         val outputs = mutableListOf<Int>()
-        IntCodeProcessor5().process(codes, sequenceOf(systemId).iterator(), outputs::add)
+        IntCodeProcessor5(codes).process( sequenceOf(systemId).iterator(), outputs::add)
         println(outputs)
         return outputs.last()
     }
