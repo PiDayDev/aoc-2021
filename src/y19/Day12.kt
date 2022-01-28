@@ -1,5 +1,6 @@
 package y19
 
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
@@ -44,18 +45,38 @@ fun main() {
             moons.step()
         }.sumOf { it.energy() }
 
-    fun part2(input: List<String>): Int {
-        return 42
+    tailrec fun gcd(a: Long, b: Long): Long = if (b == 0L) a else gcd(b, a % b)
+    fun lcm(a: Long, b: Long) = a * b / gcd(a, b)
+
+    fun part2(input: List<String>, log: Boolean = false): Long {
+        val initialMoons = input.toMoons()
+        val lastStatus = AtomicReference(XYZ(0, 0, 0))
+        val xProjections = mutableSetOf<List<Pair<Long, Long>>>()
+        val yProjections = mutableSetOf<List<Pair<Long, Long>>>()
+        val zProjections = mutableSetOf<List<Pair<Long, Long>>>()
+        generateSequence(1) { it + 1 }.fold(initialMoons) { moons, n ->
+            xProjections += moons.map { it.position.x to it.velocity.x }
+            yProjections += moons.map { it.position.y to it.velocity.y }
+            zProjections += moons.map { it.position.z to it.velocity.z }
+            val combo = XYZ(xProjections.size, yProjections.size, zProjections.size)
+            if (lastStatus.getAndSet(combo) == combo) {
+                if (log) println("$n steps => $combo")
+                return lcm(combo.x, lcm(combo.y, combo.z))
+            }
+            moons.step()
+        }
+        return -1
     }
 
     try {
         val testInput = readInput("Day${day}_test")
         check(part1(testInput, 10) == 179L)
+        check(part2(testInput) == 2772L)
     } catch (e: java.io.FileNotFoundException) {
         // no tests
     }
 
     val input = readInput("Day${day}")
     println(part1(input, 1000))
-    println(part2(input))
+    println(part2(input, true))
 }
