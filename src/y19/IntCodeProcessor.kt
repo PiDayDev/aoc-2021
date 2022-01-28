@@ -44,11 +44,15 @@ class IntCodeProcessor(
                     pointer += 4
                 }
                 3 -> {
-                    codes[destA] = input.next()
+                    val read = input.next()
+//                    println("<=IN== $read")
+                    codes[destA] = read
                     pointer += 2
                 }
                 4 -> {
-                    output(codes.valueOf(a, modeA))
+                    val write = codes.valueOf(a, modeA)
+//                    println("=OUT=> $write")
+                    output(write)
                     pointer += 2
                     if (stopAfterOutput) {
                         break
