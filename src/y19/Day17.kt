@@ -7,7 +7,7 @@ fun main() {
         val sb = StringBuilder()
         IntCodeProcessor(codes).process(iterator { }) { sb.append(Char(it.toInt())) }
         val rows = sb.split("\n").filter { it.isNotBlank() }
-        println("     " + rows[0].indices.joinToString("") { if(it<10) " " else "${it / 10}" })
+        println("     " + rows[0].indices.joinToString("") { if (it < 10) " " else "${it / 10}" })
         println("     " + rows[0].indices.joinToString("") { "${it % 10}" })
         rows.forEachIndexed { y, s ->
             println("${y.toString().padStart(4)} $s")
@@ -27,15 +27,18 @@ fun main() {
         return crossings.sumOf { (x, y) -> x * y }
     }
 
-    fun part2(codes: List<Long>): Int {
-        return codes.size
-    }
-
-    try {
-        val testInput = readInput("Day${day}_test").codes()
-        check(part1(testInput) == 1)
-    } catch (e: java.io.FileNotFoundException) {
-        // no tests
+    fun part2(codes: List<Long>): Long {
+        val a = "R,12,L,12,R,6"
+        val b = "R,10,R,12,L,12"
+        val c = "L,10,R,10,L,10,L,10"
+        val instructions = "C,B,C,B,A,A,B,C,B,A"
+        val inputs = "$instructions\n$a\n$b\n$c\nn\n"
+            .map { it.code.toLong() }
+            .iterator()
+        val result = mutableListOf<Long>()
+        val wakeUp = codes.toMutableList().also { it[0] = 2 }
+        IntCodeProcessor(wakeUp).process(inputs) { result += it }
+        return result.last()
     }
 
     val codes = readInput("Day${day}").codes()
