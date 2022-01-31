@@ -21,3 +21,5 @@ fun <T> permutations(list: List<T>): List<List<T>> {
     if (list.size == 1) return listOf(list)
     return list.flatMap { elem -> permutations(list - elem).map { it + elem } }
 }
+
+fun List<String>.codes() = flatMap { r -> r.split(",").map { it.toLong() } }

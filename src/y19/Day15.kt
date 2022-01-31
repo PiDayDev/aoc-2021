@@ -4,9 +4,6 @@ import kotlin.random.Random
 
 private const val day = 15
 
-
-private fun List<String>.codes() = flatMap { it.split(",").map { it.toLong() } }
-
 private typealias Pos = Pair<Int, Int>
 
 private val Pos.x
@@ -125,14 +122,14 @@ fun main() {
 
 
     fun part1(map: Map<Pos, Int>): Int {
-        val goal = map.filterValues { it==2 }.keys.first()
-        val dist = map.filterValues { it>0 }.keys.minDistances(0 to 0)
+        val goal = map.filterValues { it == 2 }.keys.first()
+        val dist = map.filterValues { it > 0 }.keys.minDistances(0 to 0)
         return dist[goal]!!
     }
 
     fun part2(map: Map<Pos, Int>): Int {
-        val goal = map.filterValues { it==2 }.keys.first()
-        val dist = map.filterValues { it>0 }.keys.minDistances(goal)
+        val goal = map.filterValues { it == 2 }.keys.first()
+        val dist = map.filterValues { it > 0 }.keys.minDistances(goal)
         return dist.values.maxOf { it }
     }
 
@@ -140,7 +137,7 @@ fun main() {
     val codes = readInput("Day${day}").codes()
 
     val map = explore(codes)
-        map.draw()
+    map.draw()
     println(part1(map))
     println(part2(map))
 }

@@ -12,8 +12,7 @@ fun main() {
         return out.get()
     }
 
-    val input = readInput("Day${day}")
-    val codes = input.first().split(",").map { it.toLong() }
+    val codes = readInput("Day${day}").codes()
     println(solve(codes, 1L))
     println(solve(codes, 2L))
 }

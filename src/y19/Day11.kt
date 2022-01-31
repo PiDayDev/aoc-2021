@@ -47,7 +47,7 @@ fun main() {
             nextOutputIsColor.set(!coloring)
         }
 
-        val codes = input.first().split(",").map { it.toLong() }
+        val codes = input.codes()
         val processor = IntCodeProcessor(codes)
         while (!processor.halted()) {
             processor.process(

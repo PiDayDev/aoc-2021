@@ -26,7 +26,7 @@ fun main() {
     }
 
     fun solve(input: List<String>, range: LongRange): Long {
-        val codes = input.first().split(",").map { it.toLong() }
+        val codes = input.codes()
         val allSettings = permutations(range.toList())
         val map = allSettings.associateWith { codes executeWithSettings it }
         return map.values.maxOf { it }

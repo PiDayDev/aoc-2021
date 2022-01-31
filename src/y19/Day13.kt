@@ -73,7 +73,7 @@ fun main() {
 
     fun part2(codes: List<Long>) = codes.play()
 
-    val codes = readInput("Day$day").first().split(",").map { it.toLong() }
+    val codes = readInput("Day$day").codes()
     println(part1(codes))
     println(part2(codes))
 }

@@ -5,7 +5,7 @@ private const val day = "05"
 fun main() {
 
     fun List<String>.execute(systemId: Long): Long {
-        val codes = joinToString("").split(",").map { it.toLong() }
+        val codes = codes()
         val outputs = mutableListOf<Long>()
         IntCodeProcessor(codes).process(sequenceOf(systemId).iterator(), outputs::add)
         println(outputs)
