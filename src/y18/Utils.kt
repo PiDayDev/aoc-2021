@@ -17,3 +17,18 @@ fun String.md5b(): ByteArray =
 fun String.md5h(): String =
     md5b().joinToString("") { it.toUByte().toString(16).padStart(2, '0') }
 
+fun <T> minDistances(start: T, getNeighbors: (T) -> List<T>): Map<T, Int> {
+    val distances: MutableMap<T, Int> = mutableMapOf(start to 0)
+    var last = distances.toMap()
+    var d = 0
+    while (last.isNotEmpty()) {
+        d++
+        val neighbors = last.keys
+            .flatMap { getNeighbors(it) }
+            .distinct()
+            .filter { it !in distances.keys }
+        last = neighbors.associateWith { d }
+        distances.putAll(last)
+    }
+    return distances
+}

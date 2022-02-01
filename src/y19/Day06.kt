@@ -3,23 +3,10 @@ package y19
 private const val day = "06"
 
 fun main() {
-    fun Map<String, String>.minDistances(center: String): Map<String, Int> {
-        val distances = mutableMapOf(center to 0)
-        var last = distances.toMap()
-        var d = 0
-        while (last.isNotEmpty()) {
-            d++
-            val neighbors = last.keys
-                .flatMap {
-                    keys.filter { k -> this[k] == it } + values.filter { v -> this[it] == v }
-                }
-                .distinct()
-                .filter { it !in distances.keys }
-            last = neighbors.associateWith { d }
-            distances.putAll(last)
+    fun Map<String, String>.minDistances(center: String) =
+        minDistances(center) {
+            keys.filter { k -> this[k] == it } + values.filter { v -> this[it] == v }
         }
-        return distances
-    }
 
 
     fun List<String>.orbits(): Map<String, String> = map { it.split(")") }

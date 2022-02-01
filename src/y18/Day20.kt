@@ -246,24 +246,9 @@ fun main() {
             return (map.getOrNull(yDoor)?.getOrNull(xDoor)?.toString() ?: WALL) in "$V_DOOR$H_DOOR"
         }
 
-        fun minDistances(xy: Pair<Int, Int>): Map<Pair<Int, Int>, Int> {
-            val (x, y) = xy
-            val distances = mutableMapOf((x to y) to 0)
-            var last = distances.toMap()
-            var d = 0
-            while (last.isNotEmpty()) {
-                d++
-                val neighbors = last.keys
-                    .flatMap { it.extend().filter { next -> isReachable(it, next) } }
-                    .distinct()
-                    .filter { it !in distances.keys }
-                last = neighbors.associateWith { d }
-                distances.putAll(last)
-            }
-            return distances
+        return minDistances(x0 to y0) {
+            it.extend().filter { next -> isReachable(it, next) }
         }
-
-        return minDistances(x0 to y0)
     }
 
     fun part1(distances: Map<Pair<Int, Int>, Int>) = distances.values.maxOf { it }

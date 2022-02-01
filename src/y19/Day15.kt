@@ -102,23 +102,10 @@ fun main() {
         return map
     }
 
-    fun Collection<Pos>.minDistances(center: Pos): Map<Pos, Int> {
-        val distances = mutableMapOf(center to 0)
-        var last = distances.toMap()
-        var d = 0
-        while (last.isNotEmpty()) {
-            d++
-            val neighbors = last.keys
-                .flatMap { p ->
-                    directions.map { d -> p + d }
-                }
-                .distinct()
-                .filter { it in this - distances.keys }
-            last = neighbors.associateWith { d }
-            distances.putAll(last)
+    fun Collection<Pos>.minDistances(center: Pos)=
+        minDistances(center) { p ->
+            directions.map { d -> p + d }.filter { it in this }
         }
-        return distances
-    }
 
 
     fun part1(map: Map<Pos, Int>): Int {
