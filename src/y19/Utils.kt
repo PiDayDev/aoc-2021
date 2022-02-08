@@ -24,11 +24,11 @@ fun <T> permutations(list: List<T>): List<List<T>> {
 
 fun List<String>.codes() = flatMap { r -> r.split(",").map { it.toLong() } }
 
-fun <T> minDistances(start: T, getNeighbors: (T) -> List<T>): Map<T, Int> {
+fun <T> minDistances(start: T, finish: T? = null, getNeighbors: (T) -> List<T>): Map<T, Int> {
     val distances: MutableMap<T, Int> = mutableMapOf(start to 0)
     var last = distances.toMap()
     var d = 0
-    while (last.isNotEmpty()) {
+    while (last.isNotEmpty() && finish !in distances) {
         d++
         val neighbors = last.keys
             .flatMap { getNeighbors(it) }
