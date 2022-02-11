@@ -17,3 +17,7 @@ tasks {
         gradleVersion = "7.3"
     }
 }
+
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+}

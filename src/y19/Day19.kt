@@ -52,7 +52,5 @@ fun main() {
 
     val input = readInput("Day${day}").codes()
     println(part1(input))
-    val p2 = part2(input)
-    println(p2)
-    check(p2 < 7081148)
+    println(part2(input))
 }
