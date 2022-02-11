@@ -8,7 +8,10 @@ private const val day = 23
 @ExperimentalCoroutinesApi
 fun main() {
 
-    fun part1(codes: List<Long>): Long {
+    fun simulateNetwork(
+        codes: List<Long>,
+        stopCondition: (List<Long>) -> Boolean
+    ): MutableList<Long> {
         val ids = 0L..49L
         val channels = ids.associateWith { Stack<Long>().apply { push(it) } }
 
@@ -19,16 +22,20 @@ fun main() {
             ids.forEach { id ->
                 val process = IntCodeProcessor23(codes, id)
                 jobs += launch {
-                    result += process.asyncExecute(channels) { it.isNotEmpty() }
+                    result += process.asyncExecute(channels, stopCondition)
                     jobs.forEach { it.cancel("DONE") }
                 }
             }
         }
-        return result.first()
+        return result
     }
 
-    fun part2(codes: List<Long>): Int {
-        return codes.size
+    fun part1(codes: List<Long>) = simulateNetwork(codes) { it.isNotEmpty() }.first()
+
+    fun part2(codes: List<Long>): Long {
+        val stopCondition: (List<Long>) -> Boolean = { it.size >= 100 }
+        val result = simulateNetwork(codes, stopCondition)
+        return result.first()
     }
 
     val input = readInput("Day${day}").codes()
@@ -51,24 +58,27 @@ class IntCodeProcessor23(
         while (!halted()) {
             fun inputGetter(): Long {
                 if (input.isEmpty()) runBlocking { yield() }
-                return if (input.isEmpty()) -1L else input.pop()
+                val v = if (input.isEmpty()) -1L else input.pop()
+                println("<=IN=[$id]== $v")
+                return v
             }
 
             executeStep(::inputGetter) {
                 buffer.add(it)
-//                println("=OUT=[$id]=> ".padEnd(25) + "| " + "| ".repeat(id.toInt()) + "$it  [ buffer size = ${buffer.size} ]")
+                println("=OUT=[$id]=> ".padEnd(25) + "| " + "| ".repeat(id.toInt()) + "$it  [ buffer size = ${buffer.size} ]")
                 if (buffer.size == 3) {
-//                    println("=SEND=> $buffer")
+                    println("=SEND=> $buffer")
                     val (address, x, y) = buffer
                     if (address == 255L) {
                         result += y
-                        result += x
+                        println(":" + result.size)
+                        channels[0]!!.push(y)
                     } else {
                         val output = channels[address]!!
                         output.push(y)
                         output.push(x)
-                        buffer.clear()
                     }
+                    buffer.clear()
                 }
             }
             if (stopCondition(result)) break
