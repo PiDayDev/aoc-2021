@@ -2,6 +2,8 @@ package y19
 
 private const val day = 24
 
+private data class Bug(val x: Int, val y: Int, val z: Int)
+
 fun main() {
     fun List<String>.gameOfBugs(): List<String> =
         mapIndexed { r, row ->
@@ -29,18 +31,58 @@ fun main() {
         .last()
         .biodiversity()
 
-    fun part2(input: List<String>): Int {
-        return input.size
+    /*
+     x 01234
+    y
+    0  #####
+    1  #####
+    2  ##?##
+    3  #####
+    4  #####
+     */
+    fun Bug.neighbors(): List<Bug> {
+        val range = 0..4
+        val sameLevel = listOf(copy(x = x + 1), copy(x = x - 1), copy(y = y - 1), copy(y = y + 1))
+            .filter { it.x in range && it.y in range && !(it.x == 2 && it.y == 2) }
+        val inner = when (x to y) {
+            2 to 1 -> range.map { Bug(x = it, y = 0, z = z + 1) }
+            2 to 3 -> range.map { Bug(x = it, y = 4, z = z + 1) }
+            1 to 2 -> range.map { Bug(x = 0, y = it, z = z + 1) }
+            3 to 2 -> range.map { Bug(x = 4, y = it, z = z + 1) }
+            else -> listOf()
+        }
+        val outer1 = when (y) {
+            0 -> Bug(x = 2, y = 1, z = z - 1)
+            4 -> Bug(x = 2, y = 3, z = z - 1)
+            else -> null
+        }
+        val outer2 = when (x) {
+            0 -> Bug(x = 1, y = 2, z = z - 1)
+            4 -> Bug(x = 3, y = 2, z = z - 1)
+            else -> null
+        }
+        return sameLevel + inner + listOfNotNull(outer1, outer2)
     }
 
-    try {
-        val testInput = readInput("Day${day}_test")
-        check(part1(testInput) == 1)
-    } catch (e: java.io.FileNotFoundException) {
-        // no tests
+    fun Collection<Bug>.gameOfHyperBugs(): Collection<Bug> {
+        return flatMap { it.neighbors() }
+            .groupBy { it }
+            .mapValues { (_, list) -> list.size }
+            .filter { (bug, count) -> count == 1 || bug !in this && count == 2 }
+            .keys
+    }
+
+    fun part2(input: List<String>): Int {
+        val initial: Collection<Bug> = input.flatMapIndexed { y, row ->
+            row.mapIndexedNotNull { x, cell ->
+                if (cell == '#') Bug(x, y, 0) else null
+            }
+        }
+        return (1..200).fold(initial) { a, _ -> a.gameOfHyperBugs() }.size
     }
 
     val input = readInput("Day${day}")
     println(part1(input))
     println(part2(input))
 }
+
