@@ -1,4 +1,4 @@
-package y19
+package y20
 
 private const val day = "00"
 
@@ -18,7 +18,11 @@ fun main() {
         // no tests
     }
 
-    val input = readInput("Day${day}")
-    println(part1(input))
-    println(part2(input))
+    val input = readInput("Day$day")
+    val p1 = part1(input)
+    println(p1)
+    check(p1 == 1)
+    val p2 = part2(input)
+    println(p2)
+    check(p2 == 1)
 }
